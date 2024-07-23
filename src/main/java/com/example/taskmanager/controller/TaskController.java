@@ -1,8 +1,9 @@
 package com.example.taskmanager.controller;
 
 import com.example.taskmanager.model.Task;
-import com.example.taskmanager.repository.TaskRepository;
+import com.example.taskmanager.service.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,34 +14,36 @@ import java.util.Optional;
 public class TaskController {
 
     @Autowired
-    private TaskRepository taskRepository;
+    private TaskService taskService;
 
     @GetMapping
     public List<Task> getAllTasks() {
-        return taskRepository.findAll();
+        return taskService.getAllTasks();
     }
 
     @GetMapping("/{id}")
-    public Optional<Task> getTaskById(@PathVariable Long id) {
-        return taskRepository.findById(id);
+    public ResponseEntity<Task> getTaskById(@PathVariable Long id) {
+        Optional<Task> task = taskService.getTaskById(id);
+        return task.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
     public Task createTask(@RequestBody Task task) {
-        return taskRepository.save(task);
+        return taskService.createTask(task);
     }
 
     @PutMapping("/{id}")
-    public Task updateTask(@PathVariable Long id, @RequestBody Task taskDetails) {
-        Task task = taskRepository.findById(id).orElseThrow(() -> new RuntimeException("Task not found"));
-        task.setName(taskDetails.getName());
-        task.setDescription(taskDetails.getDescription());
-        task.setCompleted(taskDetails.isCompleted());
-        return taskRepository.save(task);
+    public ResponseEntity<Task> updateTask(@PathVariable Long id, @RequestBody Task task) {
+        Optional<Task> updatedTask = taskService.updateTask(id, task);
+        return updatedTask.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
-    public void deleteTask(@PathVariable Long id) {
-        taskRepository.deleteById(id);
+    public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
+        if (taskService.deleteTask(id)) {
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 }
