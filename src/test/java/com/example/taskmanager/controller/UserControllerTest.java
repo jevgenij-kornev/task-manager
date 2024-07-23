@@ -1,96 +1,106 @@
 package com.example.taskmanager.controller;
 
-import com.example.taskmanager.config.TestSecurityConfig;
 import com.example.taskmanager.model.User;
-import com.example.taskmanager.repository.UserRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.example.taskmanager.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Optional;
 
+import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(UserController.class)
-@Import(TestSecurityConfig.class)
-public class UserControllerTest {
+class UserControllerTest {
 
-    @Autowired
+    @Mock
+    private UserService userService;
+
+    @InjectMocks
+    private UserController userController;
+
     private MockMvc mockMvc;
-
-    @MockBean
-    private UserRepository userRepository;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    private User user;
 
     @BeforeEach
     void setUp() {
-        user = new User();
-        user.setId(1L);
-        user.setUsername("john_doe");
-        user.setPassword("password123");
-        user.setEmail("john.doe@example.com");
+        MockitoAnnotations.openMocks(this);
+        mockMvc = MockMvcBuilders.standaloneSetup(userController).build();
     }
 
     @Test
     void getAllUsers() throws Exception {
-        Mockito.when(userRepository.findAll()).thenReturn(Arrays.asList(user));
+        User user = new User();
+        user.setId(1L);
+        user.setUsername("testuser");
 
-        mockMvc.perform(get("/api/users"))
+        when(userService.getAllUsers()).thenReturn(Collections.singletonList(user));
+
+        mockMvc.perform(get("/api/users")
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].username").value(user.getUsername()));
+                .andExpect(jsonPath("$[0].username", is("testuser")));
     }
 
     @Test
     void getUserById() throws Exception {
-        Mockito.when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        User user = new User();
+        user.setId(1L);
+        user.setUsername("testuser");
 
-        mockMvc.perform(get("/api/users/1"))
+        when(userService.getUserById(1L)).thenReturn(Optional.of(user));
+
+        mockMvc.perform(get("/api/users/1")
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value(user.getUsername()));
+                .andExpect(jsonPath("$.username", is("testuser")));
     }
 
     @Test
     void createUser() throws Exception {
-        Mockito.when(userRepository.save(Mockito.any(User.class))).thenReturn(user);
+        User user = new User();
+        user.setId(1L);
+        user.setUsername("newuser");
+
+        when(userService.createUser(any(User.class))).thenReturn(user);
 
         mockMvc.perform(post("/api/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(user)))
+                        .content("{\"username\":\"newuser\",\"password\":\"password\",\"email\":\"email@example.com\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value(user.getUsername()));
+                .andExpect(jsonPath("$.username", is("newuser")));
     }
 
     @Test
     void updateUser() throws Exception {
-        Mockito.when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        Mockito.when(userRepository.save(Mockito.any(User.class))).thenReturn(user);
+        User user = new User();
+        user.setId(1L);
+        user.setUsername("updateduser");
+
+        when(userService.updateUser(eq(1L), any(User.class))).thenReturn(Optional.of(user));
 
         mockMvc.perform(put("/api/users/1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(user)))
+                        .content("{\"username\":\"updateduser\",\"password\":\"password\",\"email\":\"email@example.com\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value(user.getUsername()));
+                .andExpect(jsonPath("$.username", is("updateduser")));
     }
 
     @Test
     void deleteUser() throws Exception {
-        Mockito.when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        Mockito.doNothing().when(userRepository).deleteById(1L);
+        when(userService.deleteUser(1L)).thenReturn(true);
 
-        mockMvc.perform(delete("/api/users/1"))
-                .andExpect(status().isOk());
+        mockMvc.perform(delete("/api/users/1")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
     }
 }

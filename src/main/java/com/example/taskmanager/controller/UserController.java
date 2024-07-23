@@ -1,9 +1,10 @@
 package com.example.taskmanager.controller;
 
 import com.example.taskmanager.model.User;
-import com.example.taskmanager.repository.UserRepository;
+import com.example.taskmanager.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*; // TODO убрать звездочки.
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,34 +14,36 @@ import java.util.Optional;
 public class UserController {
 
     @Autowired
-    private UserRepository userRepository;
+    private UserService userService;
 
     @GetMapping
     public List<User> getAllUsers() {
-        return userRepository.findAll();
+        return userService.getAllUsers();
     }
 
     @GetMapping("/{id}")
-    public Optional<User> getUserById(@PathVariable Long id) {
-        return userRepository.findById(id);
+    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+        Optional<User> user = userService.getUserById(id);
+        return user.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
     public User createUser(@RequestBody User user) {
-        return userRepository.save(user);
+        return userService.createUser(user);
     }
 
     @PutMapping("/{id}")
-    public User updateUser(@PathVariable Long id, @RequestBody User userDetails) {
-        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
-        user.setUsername(userDetails.getUsername());
-        user.setPassword(userDetails.getPassword());
-        user.setEmail(userDetails.getEmail());
-        return userRepository.save(user);
+    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
+        Optional<User> updatedUser = userService.updateUser(id, user);
+        return updatedUser.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable Long id) {
-        userRepository.deleteById(id);
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        if (userService.deleteUser(id)) {
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 }
