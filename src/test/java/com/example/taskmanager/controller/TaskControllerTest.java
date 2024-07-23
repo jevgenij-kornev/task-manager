@@ -3,7 +3,7 @@ package com.example.taskmanager.controller;
 import com.example.taskmanager.config.TestSecurityConfig;
 import com.example.taskmanager.model.Project;
 import com.example.taskmanager.model.Task;
-import com.example.taskmanager.repository.TaskRepository;
+import com.example.taskmanager.service.TaskService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,7 +30,7 @@ public class TaskControllerTest {
     private MockMvc mockMvc;
 
     @MockBean
-    private TaskRepository taskRepository;
+    private TaskService taskService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -54,7 +54,7 @@ public class TaskControllerTest {
 
     @Test
     void getAllTasks() throws Exception {
-        Mockito.when(taskRepository.findAll()).thenReturn(Collections.singletonList(task));
+        Mockito.when(taskService.getAllTasks()).thenReturn(Collections.singletonList(task));
 
         mockMvc.perform(get("/api/tasks"))
                 .andExpect(status().isOk())
@@ -63,7 +63,7 @@ public class TaskControllerTest {
 
     @Test
     void getTaskById() throws Exception {
-        Mockito.when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
+        Mockito.when(taskService.getTaskById(1L)).thenReturn(Optional.of(task));
 
         mockMvc.perform(get("/api/tasks/1"))
                 .andExpect(status().isOk())
@@ -72,7 +72,7 @@ public class TaskControllerTest {
 
     @Test
     void createTask() throws Exception {
-        Mockito.when(taskRepository.save(Mockito.any(Task.class))).thenReturn(task);
+        Mockito.when(taskService.createTask(Mockito.any(Task.class))).thenReturn(task);
 
         mockMvc.perform(post("/api/tasks")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -83,8 +83,8 @@ public class TaskControllerTest {
 
     @Test
     void updateTask() throws Exception {
-        Mockito.when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
-        Mockito.when(taskRepository.save(Mockito.any(Task.class))).thenReturn(task);
+        Mockito.when(taskService.getTaskById(1L)).thenReturn(Optional.of(task));
+        Mockito.when(taskService.updateTask(Mockito.eq(1L), Mockito.any(Task.class))).thenReturn(Optional.of(task));
 
         mockMvc.perform(put("/api/tasks/1")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -95,10 +95,9 @@ public class TaskControllerTest {
 
     @Test
     void deleteTask() throws Exception {
-        Mockito.when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
-        Mockito.doNothing().when(taskRepository).deleteById(1L);
+        Mockito.when(taskService.deleteTask(1L)).thenReturn(true);
 
         mockMvc.perform(delete("/api/tasks/1"))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
     }
 }
