@@ -3,7 +3,7 @@ package com.example.taskmanager.controller;
 import com.example.taskmanager.model.User;
 import com.example.taskmanager.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.*; // TODO убрать звездочки.
 
 import java.util.List;
 import java.util.Optional;
