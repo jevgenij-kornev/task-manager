@@ -1,8 +1,9 @@
 package com.example.taskmanager.controller;
 
 import com.example.taskmanager.model.Project;
-import com.example.taskmanager.repository.ProjectRepository;
+import com.example.taskmanager.service.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,33 +14,36 @@ import java.util.Optional;
 public class ProjectController {
 
     @Autowired
-    private ProjectRepository projectRepository;
+    private ProjectService projectService;
 
     @GetMapping
     public List<Project> getAllProjects() {
-        return projectRepository.findAll();
+        return projectService.getAllProjects();
     }
 
     @GetMapping("/{id}")
-    public Optional<Project> getProjectById(@PathVariable Long id) {
-        return projectRepository.findById(id);
+    public ResponseEntity<Project> getProjectById(@PathVariable Long id) {
+        Optional<Project> project = projectService.getProjectById(id);
+        return project.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
     public Project createProject(@RequestBody Project project) {
-        return projectRepository.save(project);
+        return projectService.createProject(project);
     }
 
     @PutMapping("/{id}")
-    public Project updateProject(@PathVariable Long id, @RequestBody Project projectDetails) {
-        Project project = projectRepository.findById(id).orElseThrow(() -> new RuntimeException("Project not found"));
-        project.setName(projectDetails.getName());
-        project.setDescription(projectDetails.getDescription());
-        return projectRepository.save(project);
+    public ResponseEntity<Project> updateProject(@PathVariable Long id, @RequestBody Project project) {
+        Optional<Project> updatedProject = projectService.updateProject(id, project);
+        return updatedProject.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
-    public void deleteProject(@PathVariable Long id) {
-        projectRepository.deleteById(id);
+    public ResponseEntity<Void> deleteProject(@PathVariable Long id) {
+        if (projectService.deleteProject(id)) {
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 }
