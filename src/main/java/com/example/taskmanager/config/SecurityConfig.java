@@ -13,10 +13,10 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf().disable()
                 .authorizeRequests()
-                .antMatchers("/api/**").permitAll() // Разрешаем доступ к нашим API без авторизации
-                .antMatchers("/h2-console/**").permitAll() // Разрешаем доступ к консоли H2
+                .antMatchers("/api/**").permitAll()
+                .antMatchers("/h2-console/**").permitAll()
                 .anyRequest().authenticated()
-                .and().headers().frameOptions().disable(); // Отключаем защиту iframe для H2 консоли
+                .and().headers().frameOptions().disable();
         return http.build();
     }
 }
