@@ -19,9 +19,19 @@ jobs:
         uses: actions/setup-java@v2
         with:
           java-version: '17'
+          distribution: 'temurin'
 
       - name: Build with Maven
         run: mvn clean install
 
       - name: Run tests
         run: mvn test
+
+      - name: Build Docker image
+        run: docker build -t your-dockerhub-username/taskmanager .
+
+      - name: Login to DockerHub
+        run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      - name: Push Docker image
+        run: docker push your-dockerhub-username/taskmanager
